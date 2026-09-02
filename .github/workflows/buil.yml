@@ -23,19 +23,24 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Clean and Generate Modern Android V2 Files
+    - name: Clean and Generate Android Project
       run: |
         rm -rf android
         flutter create --platforms=android --org com.healthalarm .
+
+    - name: Fix MinSDK Version
+      run: |
+        sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
+        sed -i 's/flutter.minSdkVersion/21/g' android/app/build.gradle || true
 
     - name: Get dependencies
       run: flutter pub get
 
     - name: Build APK
-      run: flutter build apk --release
+      run: flutter build apk --debug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: health-alarm-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
