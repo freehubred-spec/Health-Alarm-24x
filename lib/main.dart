@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +12,7 @@ class HealthAlarmApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Health & Talking Alarm 24x',
+      title: 'Health Alarm 24x',
       theme: ThemeData(
         primarySwatch: Colors.teal,
         useMaterial3: true,
@@ -31,26 +30,19 @@ class MainDashboard extends StatefulWidget {
 }
 
 class _MainDashboardState extends State<MainDashboard> {
-  final FlutterTts flutterTts = FlutterTts();
   int _selectedIndex = 0;
-
-  Future<void> _speak(String text) async {
-    await flutterTts.setLanguage("hi-IN");
-    await flutterTts.setPitch(1.0);
-    await flutterTts.speak(text);
-  }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildAlarmTab(),
-      _buildHealthCalculatorsTab(),
+      _buildCalculatorsTab(),
       _buildYogaDietTab(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Health & Talking Alarm 24x'),
+        title: const Text('Health & Alarm 24x'),
         centerTitle: true,
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
@@ -61,7 +53,7 @@ class _MainDashboardState extends State<MainDashboard> {
         onTap: (index) => setState(() => _selectedIndex = index),
         selectedItemColor: Colors.teal,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.alarm), label: 'Talking Alarm'),
+          BottomNavigationBarItem(icon: Icon(Icons.alarm), label: 'Alarm'),
           BottomNavigationBarItem(icon: Icon(Icons.calculate), label: 'Calculators'),
           BottomNavigationBarItem(icon: Icon(Icons.self_improvement), label: 'Yoga & Diet'),
         ],
@@ -74,30 +66,52 @@ class _MainDashboardState extends State<MainDashboard> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.record_voice_over, size: 80, color: Colors.teal),
+          const Icon(Icons.notifications_active, size: 80, color: Colors.teal),
+          const SizedBox(height: 20),
+          const Text(
+            'Health Alarm 24x',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          const Text('Paani peene aur workout ka reminder set karein.'),
           const SizedBox(height: 20),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               backgroundColor: Colors.teal,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            onPressed: () => _speak("Namaste! Yeh aapka swasthya alarm hai. Paani peene ka samay ho gaya hai."),
-            icon: const Icon(Icons.volume_up),
-            label: const Text('Test Talking Alarm (Hindi)'),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Alarm reminder set ho gaya!')),
+              );
+            },
+            icon: const Icon(Icons.check_circle),
+            label: const Text('Set Health Reminder'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHealthCalculatorsTab() {
+  Widget _buildCalculatorsTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: const [
-        Card(child: ListTile(leading: Icon(Icons.fitness_center, color: Colors.teal), title: Text('BMI Calculator'), subtitle: Text('Calculate Body Mass Index'))),
-        Card(child: ListTile(leading: Icon(Icons.water_drop, color: Colors.teal), title: Text('Water Intake Calculator'), subtitle: Text('Daily hydration requirements'))),
-        Card(child: ListTile(leading: Icon(Icons.restaurant, color: Colors.teal), title: Text('Calorie & Protein Counter'), subtitle: Text('Nutrition planning'))),
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.fitness_center, color: Colors.teal),
+            title: Text('BMI Calculator'),
+            subtitle: Text('Body Mass Index check karein'),
+          ),
+        ),
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.water_drop, color: Colors.teal),
+            title: Text('Water Intake Calculator'),
+            subtitle: Text('Roz kitna paani peena chahiye'),
+          ),
+        ),
       ],
     );
   }
@@ -106,8 +120,20 @@ class _MainDashboardState extends State<MainDashboard> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: const [
-        Card(child: ListTile(leading: Icon(Icons.no_food, color: Colors.teal), title: Text('Organ Specific Diets'), subtitle: Text('Liver, Kidney, Heart Healthy Foods'))),
-        Card(child: ListTile(leading: Icon(Icons.self_improvement, color: Colors.teal), title: Text('Daily Yoga Guides'), subtitle: Text('Step-by-step posture & breathing routines'))),
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.no_food, color: Colors.teal),
+            title: Text('Diet Routine'),
+            subtitle: Text('Healthy food chart for daily fitness'),
+          ),
+        ),
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.self_improvement, color: Colors.teal),
+            title: Text('Yoga & Exercise'),
+            subtitle: Text('Daily workout plans'),
+          ),
+        ),
       ],
     );
   }
