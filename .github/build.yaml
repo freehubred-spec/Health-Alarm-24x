@@ -24,8 +24,19 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Create Sound Asset
+        run: |
+          mkdir -p assets
+          curl -sL https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Sample-files/main/sample.mp3 -o assets/alarm.mp3
+
       - name: Generate Android Platform
         run: flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
+
+      - name: Add Android Permissions
+        run: |
+          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+          PERMISSIONS='<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n<uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n<uses-permission android:name="android.permission.WAKE_LOCK" />\n<uses-permission android:name="android.permission.VIBRATE" />\n<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />'
+          sed -i "/<manifest/a $PERMISSIONS" $MANIFEST_PATH
 
       - name: Set Permission for Gradle
         run: chmod +x android/gradlew
