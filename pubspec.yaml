@@ -1,5 +1,5 @@
 name: health_alarm_24x
-description: Health and Talking Alarm Flutter Application
+description: Health Alarm Android Application
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,13 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_tts: ^3.8.5
-  provider: ^6.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
