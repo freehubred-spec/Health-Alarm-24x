@@ -1,9 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:alarm/alarm.dart';
+import 'package:audioplayers/audioplayers.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Alarm.init();
+void main() {
   runApp(const HealthAlarmApp());
 }
 
@@ -35,17 +34,76 @@ class AlarmHomePage extends StatefulWidget {
 }
 
 class _AlarmHomePageState extends State<AlarmHomePage> {
-  List<AlarmSettings> _alarms = [];
+  final List<Map<String, dynamic>> _alarms = [];
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _loadAlarms();
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _checkAlarms();
+    });
   }
 
-  void _loadAlarms() {
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  void _checkAlarms() {
+    final now = TimeOfDay.now();
+    for (var alarm in _alarms) {
+      if (alarm['isEnabled'] &&
+          alarm['time'].hour == now.hour &&
+          alarm['time'].minute == now.minute &&
+          !alarm['isRinging']) {
+        alarm['isRinging'] = true;
+        _playAlarmSound(alarm['title']);
+      }
+    }
+  }
+
+  void _playAlarmSound(String title) async {
+    await _audioPlayer.play(AssetSource('alarm.mp3'));
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.alarm_on, color: Colors.teal, size: 30),
+              SizedBox(width: 10),
+              Text('Alarm Ringing!'),
+            ],
+          ),
+          content: Text('Time for: $title'),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+              onPressed: () async {
+                await _audioPlayer.stop();
+                Navigator.pop(context);
+              },
+              child: const Text('STOP ALARM'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _addAlarm(TimeOfDay time, String title) {
     setState(() {
-      _alarms = Alarm.getAlarms();
+      _alarms.add({
+        'time': time,
+        'title': title,
+        'isEnabled': true,
+        'isRinging': false,
+      });
     });
   }
 
@@ -80,7 +138,7 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
           ),
           ElevatedButton(
             onPressed: () {
-              _setAlarm(time, controller.text);
+              _addAlarm(time, controller.text);
               Navigator.pop(context);
             },
             child: const Text('Save Alarm'),
@@ -88,51 +146,6 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
         ],
       ),
     );
-  }
-
-  Future<void> _setAlarm(TimeOfDay time, String title) async {
-    final now = DateTime.now();
-    var alarmDateTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      time.hour,
-      time.minute,
-    );
-
-    if (alarmDateTime.isBefore(now)) {
-      alarmDateTime = alarmDateTime.add(const Duration(days: 1));
-    }
-
-    final alarmSettings = AlarmSettings(
-      id: DateTime.now().millisecondsSinceEpoch % 100000,
-      dateTime: alarmDateTime,
-      assetAudioPath: 'assets/alarm.mp3',
-      loopAudio: true,
-      vibrate: true,
-      warningNotificationOnKill: true,
-      androidFullScreenIntent: true,
-      volumeSettings: VolumeSettings.fade(
-        duration: const Duration(seconds: 2),
-        volumeEnforced: true,
-      ),
-      notificationTitle: title,
-      notificationBody: 'Health Alarm is Ringing!',
-    );
-
-    await Alarm.set(alarmSettings: alarmSettings);
-    _loadAlarms();
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Alarm scheduled for ${time.format(context)}')),
-      );
-    }
-  }
-
-  Future<void> _deleteAlarm(int id) async {
-    await Alarm.stop(id);
-    _loadAlarms();
   }
 
   @override
@@ -155,7 +168,7 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
                     style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w500),
                   ),
                   SizedBox(height: 8),
-                  Text('Tap + button to schedule a real alarm'),
+                  Text('Tap + button to set an alarm'),
                 ],
               ),
             )
@@ -164,7 +177,7 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
               itemCount: _alarms.length,
               itemBuilder: (context, index) {
                 final alarm = _alarms[index];
-                final TimeOfDay time = TimeOfDay.fromDateTime(alarm.dateTime);
+                final TimeOfDay time = alarm['time'];
                 return Card(
                   elevation: 3,
                   margin: const EdgeInsets.symmetric(vertical: 8),
@@ -174,10 +187,29 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
                       time.format(context),
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(alarm.notificationTitle, style: const TextStyle(fontSize: 16)),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteAlarm(alarm.id),
+                    subtitle: Text(alarm['title'], style: const TextStyle(fontSize: 16)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Switch(
+                          value: alarm['isEnabled'],
+                          activeColor: Colors.teal,
+                          onChanged: (bool value) {
+                            setState(() {
+                              alarm['isEnabled'] = value;
+                              alarm['isRinging'] = false;
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              _alarms.removeAt(index);
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 );
