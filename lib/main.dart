@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:alarm/alarm.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Alarm.init();
   runApp(const HealthAlarmApp());
 }
 
@@ -32,15 +35,17 @@ class AlarmHomePage extends StatefulWidget {
 }
 
 class _AlarmHomePageState extends State<AlarmHomePage> {
-  final List<Map<String, dynamic>> _alarms = [];
+  List<AlarmSettings> _alarms = [];
 
-  void _addAlarm(TimeOfDay time, String title) {
+  @override
+  void initState() {
+    super.initState();
+    _loadAlarms();
+  }
+
+  void _loadAlarms() {
     setState(() {
-      _alarms.add({
-        'time': time,
-        'title': title,
-        'isEnabled': true,
-      });
+      _alarms = Alarm.getAlarms();
     });
   }
 
@@ -75,7 +80,7 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
           ),
           ElevatedButton(
             onPressed: () {
-              _addAlarm(time, controller.text);
+              _setAlarm(time, controller.text);
               Navigator.pop(context);
             },
             child: const Text('Save Alarm'),
@@ -83,6 +88,51 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
         ],
       ),
     );
+  }
+
+  Future<void> _setAlarm(TimeOfDay time, String title) async {
+    final now = DateTime.now();
+    var alarmDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      time.hour,
+      time.minute,
+    );
+
+    if (alarmDateTime.isBefore(now)) {
+      alarmDateTime = alarmDateTime.add(const Duration(days: 1));
+    }
+
+    final alarmSettings = AlarmSettings(
+      id: DateTime.now().millisecondsSinceEpoch % 100000,
+      dateTime: alarmDateTime,
+      assetAudioPath: 'assets/alarm.mp3',
+      loopAudio: true,
+      vibrate: true,
+      warningNotificationOnKill: true,
+      androidFullScreenIntent: true,
+      volumeSettings: VolumeSettings.fade(
+        duration: const Duration(seconds: 2),
+        volumeEnforced: true,
+      ),
+      notificationTitle: title,
+      notificationBody: 'Health Alarm is Ringing!',
+    );
+
+    await Alarm.set(alarmSettings: alarmSettings);
+    _loadAlarms();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Alarm scheduled for ${time.format(context)}')),
+      );
+    }
+  }
+
+  Future<void> _deleteAlarm(int id) async {
+    await Alarm.stop(id);
+    _loadAlarms();
   }
 
   @override
@@ -101,11 +151,11 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
                   Icon(Icons.alarm_off, size: 80, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
-                    'No Alarms Set Yet!',
+                    'No Active Alarms!',
                     style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w500),
                   ),
                   SizedBox(height: 8),
-                  Text('Tap + button to add a health alarm'),
+                  Text('Tap + button to schedule a real alarm'),
                 ],
               ),
             )
@@ -114,7 +164,7 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
               itemCount: _alarms.length,
               itemBuilder: (context, index) {
                 final alarm = _alarms[index];
-                final TimeOfDay time = alarm['time'];
+                final TimeOfDay time = TimeOfDay.fromDateTime(alarm.dateTime);
                 return Card(
                   elevation: 3,
                   margin: const EdgeInsets.symmetric(vertical: 8),
@@ -124,15 +174,10 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
                       time.format(context),
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(alarm['title'], style: const TextStyle(fontSize: 16)),
-                    trailing: Switch(
-                      value: alarm['isEnabled'],
-                      activeColor: Colors.teal,
-                      onChanged: (bool value) {
-                        setState(() {
-                          alarm['isEnabled'] = value;
-                        });
-                      },
+                    subtitle: Text(alarm.notificationTitle, style: const TextStyle(fontSize: 16)),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteAlarm(alarm.id),
                     ),
                   ),
                 );
