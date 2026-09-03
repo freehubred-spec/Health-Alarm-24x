@@ -24,16 +24,17 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create Sound Asset
+      - name: Generate Alarm Sound File
         run: |
           mkdir -p assets
-          curl -sL https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Sample-files/main/sample.mp3 -o assets/alarm.mp3
+          python3 -c "import wave, struct, math; f=wave.open('assets/alarm.wav','w'); f.setnchannels(1); f.setsampwidth(2); f.setframerate(44100); f.writeframes(b''.join([struct.pack('<h', int(32767*0.5*math.sin(2*math.pi*880*i/44100))) for i in range(44100*3)])); f.close()"
 
       - name: Generate Android Platform
-        run: flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
-
-      - name: Set Permission for Gradle
-        run: chmod +x android/gradlew
+        run: |
+          flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
+          sed -i 's/minSdkVersion 16/minSdkVersion 21/g' android/app/build.gradle || true
+          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
 
       - name: Fetch Dependencies
         run: flutter pub get
