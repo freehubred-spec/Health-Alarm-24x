@@ -22,21 +22,37 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.19.6'
         channel: 'stable'
 
-    - name: Re-create Android Platform
+    - name: Clean & Create Native Android Structure
       run: |
         rm -rf android
-        flutter create --platforms=android --org com.healthalarm .
+        flutter create . --platforms=android --org com.healthalarm --template=app
+
+    - name: Configure Android SDK versions
+      run: |
+        python3 -c "
+import re
+path = 'android/app/build.gradle'
+with open(path, 'r') as f:
+    text = f.read()
+
+text = re.sub(r'minSdkVersion\s+.*', 'minSdkVersion 21', text)
+text = re.sub(r'minSdk\s*=.*', 'minSdk = 21', text)
+text = re.sub(r'compileSdkVersion\s+.*', 'compileSdkVersion 34', text)
+text = re.sub(r'compileSdk\s*=.*', 'compileSdk = 34', text)
+
+with open(path, 'w') as f:
+    f.write(text)
+"
 
     - name: Get Dependencies
       run: flutter pub get
 
-    - name: Build APK
+    - name: Build Debug APK
       run: flutter build apk --debug
 
-    - name: Upload APK
+    - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: health-alarm-apk
