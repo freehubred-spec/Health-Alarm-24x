@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const HealthAlarmApp());
 }
 
@@ -41,7 +42,7 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
       _checkAlarms();
     });
   }
@@ -67,28 +68,42 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
   }
 
   void _playAlarmSound(String title) async {
-    await _audioPlayer.play(AssetSource('alarm.mp3'));
+    try {
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.play(AssetSource('alarm.wav'));
+    } catch (e) {
+      debugPrint('Audio play error: $e');
+    }
+
     if (mounted) {
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
-              Icon(Icons.alarm_on, color: Colors.teal, size: 30),
+              Icon(Icons.alarm_on, color: Colors.teal, size: 32),
               SizedBox(width: 10),
-              Text('Alarm Ringing!'),
+              Text('Health Alarm!'),
             ],
           ),
-          content: Text('Time for: $title'),
+          content: Text(
+            'Time for: $title',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           actions: [
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 45),
+              ),
               onPressed: () async {
                 await _audioPlayer.stop();
                 Navigator.pop(context);
               },
-              child: const Text('STOP ALARM'),
+              child: const Text('STOP ALARM', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
