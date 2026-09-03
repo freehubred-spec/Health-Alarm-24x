@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
     - name: Set up Java
       uses: actions/setup-java@v3
@@ -23,20 +24,52 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Clean and Generate Android Project
+    - name: Accept Android Licenses
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+    - name: Clean and Generate Android Platform
       run: |
         rm -rf android
         flutter create --platforms=android --org com.healthalarm .
 
-    - name: Fix MinSDK Version
+    - name: Configure MinSDK, CompileSDK and MultiDex
       run: |
-        sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
-        sed -i 's/flutter.minSdkVersion/21/g' android/app/build.gradle || true
+        python3 -c "
+import os, re
 
-    - name: Get dependencies
+files = ['android/app/build.gradle', 'android/app/build.gradle.kts']
+for path in files:
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            text = f.read()
+        
+        # Set MinSDK to 21
+        text = re.sub(r'minSdkVersion\s+.*', 'minSdkVersion = 21', text)
+        text = re.sub(r'minSdk\s*=.*', 'minSdk = 21', text)
+        
+        # Set CompileSDK to 34
+        text = re.sub(r'compileSdkVersion\s+.*', 'compileSdkVersion = 34', text)
+        text = re.sub(r'compileSdk\s*=.*', 'compileSdk = 34', text)
+
+        # Enable MultiDex
+        if 'multiDexEnabled' not in text:
+            text = re.sub(r'(defaultConfig\s*\{)', r'\1\n        multiDexEnabled = true', text)
+
+        with open(path, 'w') as f:
+            f.write(text)
+        print('Successfully configured:', path)
+"
+
+    - name: Configure Gradle Properties
+      run: |
+        echo "android.useAndroidX=true" >> android/gradle.properties
+        echo "android.enableJetifier=true" >> android/gradle.properties
+
+    - name: Get Flutter Dependencies
       run: flutter pub get
 
-    - name: Build APK
+    - name: Build Debug APK
       run: flutter build apk --debug
 
     - name: Upload APK Artifact
