@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,21 +36,29 @@ class AlarmHomePage extends StatefulWidget {
 
 class _AlarmHomePageState extends State<AlarmHomePage> {
   final List<Map<String, dynamic>> _alarms = [];
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final FlutterTts _flutterTts = FlutterTts();
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    _initTts();
     _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
       _checkAlarms();
     });
   }
 
+  void _initTts() async {
+    await _flutterTts.setLanguage("hi-IN");
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setVolume(1.0);
+    await _flutterTts.setPitch(1.0);
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
-    _audioPlayer.dispose();
+    _flutterTts.stop();
     super.dispose();
   }
 
@@ -61,19 +69,16 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
           alarm['time'].hour == now.hour &&
           alarm['time'].minute == now.minute &&
           !alarm['isRinging']) {
-        alarm['isRinging'] = true;
-        _playAlarmSound(alarm['title']);
+        setState(() {
+          alarm['isRinging'] = true;
+        });
+        _triggerAlarm(alarm['title']);
       }
     }
   }
 
-  void _playAlarmSound(String title) async {
-    try {
-      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.play(AssetSource('alarm.wav'));
-    } catch (e) {
-      debugPrint('Audio play error: $e');
-    }
+  void _triggerAlarm(String title) async {
+    await _flutterTts.speak("Namaste! Dhyan dein, $title ka samay ho gaya hai.");
 
     if (mounted) {
       showDialog(
@@ -83,13 +88,13 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
-              Icon(Icons.alarm_on, color: Colors.teal, size: 32),
+              Icon(Icons.alarm_on, color: Colors.teal, size: 36),
               SizedBox(width: 10),
-              Text('Health Alarm!'),
+              Text('Alarm Ringing!'),
             ],
           ),
           content: Text(
-            'Time for: $title',
+            'Namaste! Time for: $title',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           actions: [
@@ -97,13 +102,13 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 45),
+                minimumSize: const Size(double.infinity, 48),
               ),
               onPressed: () async {
-                await _audioPlayer.stop();
-                Navigator.pop(context);
+                await _flutterTts.stop();
+                if (mounted) Navigator.pop(context);
               },
-              child: const Text('STOP ALARM', style: TextStyle(fontSize: 16)),
+              child: const Text('STOP ALARM', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
