@@ -28,32 +28,58 @@ jobs:
         run: |
           flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
 
-      - name: Fix Android MinSDK and CompileSDK
+      - name: Override Android Gradle Config
         run: |
-          python3 -c "
-          import re
-          path = 'android/app/build.gradle'
-          with open(path, 'r') as f:
-              text = f.read()
-          text = re.sub(r'minSdk\s*=.*', 'minSdk = 21', text)
-          text = re.sub(r'minSdkVersion\s+.*', 'minSdkVersion 21', text)
-          text = re.sub(r'compileSdk\s*=.*', 'compileSdk = 34', text)
-          text = re.sub(r'compileSdkVersion\s+.*', 'compileSdkVersion 34', text)
-          with open(path, 'w') as f:
-              f.write(text)
-          print('Android SDK versions updated successfully')
-          "
+          cat << 'EOF' > android/app/build.gradle
+          plugins {
+              id "com.android.application"
+              id "kotlin-android"
+              id "dev.flutter.flutter-gradle-plugin"
+          }
 
-      - name: Set Executable Permission for Gradle
+          android {
+              namespace "com.healthalarm"
+              compileSdk 34
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+
+              defaultConfig {
+                  applicationId "com.healthalarm"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0.0"
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.debug
+                  }
+              }
+          }
+
+          flutter {
+              source '../..'
+          }
+          EOF
+
+      - name: Grant Executable Permission
         run: chmod +x android/gradlew
 
-      - name: Fetch Flutter Dependencies
+      - name: Fetch Dependencies
         run: flutter pub get
 
       - name: Build Debug APK
         run: flutter build apk --debug
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Health-Alarm-APK
