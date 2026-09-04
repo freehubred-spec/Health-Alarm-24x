@@ -209,7 +209,7 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
                     ),
                     subtitle: Text(alarm['title'], style: const TextStyle(fontSize: 16)),
                     trailing: Row(
-                      mainAxisSize: MachineSize.min,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Switch(
                           value: alarm['isEnabled'],
