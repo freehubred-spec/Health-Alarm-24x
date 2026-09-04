@@ -28,49 +28,19 @@ jobs:
         run: |
           flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
 
-      - name: Override Android Gradle Config
+      - name: Safely Fix MinSdkVersion to 21
         run: |
-          cat << 'EOF' > android/app/build.gradle
-          plugins {
-              id "com.android.application"
-              id "kotlin-android"
-              id "dev.flutter.flutter-gradle-plugin"
-          }
+          python3 -c "
+          path = 'android/app/build.gradle'
+          with open(path, 'r') as f:
+              text = f.read()
+          text = text.replace('flutter.minSdkVersion', '21')
+          with open(path, 'w') as f:
+              f.write(text)
+          print('Successfully set minSdkVersion to 21')
+          "
 
-          android {
-              namespace "com.healthalarm"
-              compileSdk 34
-
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-
-              kotlinOptions {
-                  jvmTarget = '17'
-              }
-
-              defaultConfig {
-                  applicationId "com.healthalarm"
-                  minSdk 21
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0.0"
-              }
-
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.debug
-                  }
-              }
-          }
-
-          flutter {
-              source '../..'
-          }
-          EOF
-
-      - name: Grant Executable Permission
+      - name: Set Executable Permission
         run: chmod +x android/gradlew
 
       - name: Fetch Dependencies
