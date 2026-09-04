@@ -65,10 +65,10 @@ class _AlarmHomePageState extends State<AlarmHomePage> {
   void _checkAlarms() {
     final now = TimeOfDay.now();
     for (var alarm in _alarms) {
-      if (alarm['isEnabled'] &&
+      if (alarm['isEnabled'] == true &&
           alarm['time'].hour == now.hour &&
           alarm['time'].minute == now.minute &&
-          !alarm['isRinging']) {
+          alarm['isRinging'] == false) {
         setState(() {
           alarm['isRinging'] = true;
         });
