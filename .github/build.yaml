@@ -24,37 +24,37 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Clean and Create Android Project
+      - name: Generate Fresh Android Project
         run: |
           rm -rf android
           flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
 
-      - name: Set Android SDK Version 21 in Gradle
+      - name: Set Android MinSdkVersion to 21
         run: |
           python3 -c "
           import re
           path = 'android/app/build.gradle'
           with open(path, 'r') as f:
               text = f.read()
-          text = re.sub(r'minSdk\s*=.*', 'minSdk = 21', text)
           text = re.sub(r'minSdkVersion\s+.*', 'minSdkVersion 21', text)
-          text = re.sub(r'compileSdk\s*=.*', 'compileSdk = 34', text)
+          text = re.sub(r'minSdk\s*=.*', 'minSdk = 21', text)
           text = re.sub(r'compileSdkVersion\s+.*', 'compileSdkVersion 34', text)
+          text = re.sub(r'compileSdk\s*=.*', 'compileSdk = 34', text)
           with open(path, 'w') as f:
               f.write(text)
-          print('Updated android/app/build.gradle successfully')
+          print('Updated build.gradle with minSdk 21 successfully')
           "
 
-      - name: Set Executable Permission
+      - name: Set Permission for Gradle
         run: chmod +x android/gradlew
 
-      - name: Get Flutter Dependencies
+      - name: Fetch Dependencies
         run: flutter pub get
 
       - name: Build Debug APK
         run: flutter build apk --debug
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Health-Alarm-APK
