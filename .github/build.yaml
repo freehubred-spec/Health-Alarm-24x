@@ -28,16 +28,21 @@ jobs:
         run: |
           flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
 
-      - name: Safely Fix MinSdkVersion to 21
+      - name: Set MinSdkVersion 21
         run: |
           python3 -c "
-          path = 'android/app/build.gradle'
-          with open(path, 'r') as f:
-              text = f.read()
-          text = text.replace('flutter.minSdkVersion', '21')
-          with open(path, 'w') as f:
-              f.write(text)
-          print('Successfully set minSdkVersion to 21')
+          import os, re
+          for root, dirs, files in os.walk('android'):
+              for file in files:
+                  if file.startswith('build.gradle'):
+                      p = os.path.join(root, file)
+                      with open(p, 'r') as f:
+                          t = f.read()
+                      t = re.sub(r'flutter\.minSdkVersion', '21', t)
+                      t = re.sub(r'minSdkVersion\s+.*', 'minSdkVersion 21', t)
+                      t = re.sub(r'minSdk\s*=.*', 'minSdk = 21', t)
+                      with open(p, 'w') as f:
+                          f.write(t)
           "
 
       - name: Set Executable Permission
