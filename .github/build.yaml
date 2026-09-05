@@ -27,12 +27,7 @@ jobs:
       - name: Fix Android Folder and SDK Version
         run: |
           flutter create --platforms=android .
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
-          fi
-          if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle.kts
-          fi
+          find android/app -type f \( -name "build.gradle" -o -name "build.gradle.kts" \) -exec sed -i 's/flutter.minSdkVersion/21/g' {} +
           
       - name: Install Dependencies
         run: flutter pub get
