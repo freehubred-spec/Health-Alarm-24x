@@ -13,10 +13,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
       - name: Setup Flutter
@@ -24,20 +24,19 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Generate Android Platform
-        run: flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
-
-      - name: Set Permission for Gradle
-        run: chmod +x android/gradlew
-
-      - name: Fetch Dependencies
+      - name: Fix Android Folder and SDK Version
+        run: |
+          flutter create .
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+          
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Debug APK
-        run: flutter build apk --debug
+      - name: Build APK
+        run: flutter build apk --release
 
-      - name: Upload APK
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Health-Alarm-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
