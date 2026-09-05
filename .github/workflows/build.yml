@@ -1,4 +1,4 @@
-ssteps:
+steps:
   - name: 1. Checkout Code
     uses: actions/checkout@v4
 
