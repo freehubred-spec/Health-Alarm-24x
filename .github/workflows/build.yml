@@ -1,56 +1,52 @@
-name: FINAL FLUTTER BUILD
+  # STREAMING_CHUNK:Setting up source code and Flutter environment...
+  - name: 1. Checkout Code
+    uses: actions/checkout@v4
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  - name: 2. Setup Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: 'zulu'
+      java-version: '17'
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+  - name: 3. Setup Flutter
+    uses: subosito/flutter-action@v2
+    with:
+      channel: 'stable'
 
-    steps:
-      - name: 1. Checkout Code
-        uses: actions/checkout@v4
+  # STREAMING_CHUNK:Generating Android folder and patching SDK versions...
+  - name: 4. Create Android Files
+    run: flutter create --project-name health_alarm_24x .
 
-      - name: 2. Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+  - name: 5. Force Fix Android SDK Version via Python
+    run: |
+      python3 -c '
+      import os, re
+      
+      for root, dirs, files in os.walk("android"):
+          for file in files:
+              if "build.gradle" in file or file == "local.properties":
+                  filepath = os.path.join(root, file)
+                  with open(filepath, "r") as f:
+                      content = f.read()
+                  
+                  content = re.sub(r"flutter\.minSdkVersion", "26", content)
+                  content = re.sub(r"minSdkVersion\s+\d+", "minSdkVersion 26", content)
+                  content = re.sub(r"minSdk\s*=\s*\d+", "minSdk = 26", content)
+                  
+                  with open(filepath, "w") as f:
+                      f.write(content)
+      print("Successfully patched all Android build files to SDK 26!")
+      '
 
-      - name: 3. Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
+  # STREAMING_CHUNK:Building the Android APK release artifact...
+  - name: 6. Install Dependencies
+    run: flutter pub get
 
-      - name: 4. Create Android Files
-        run: flutter create --project-name health_alarm_24x .
-          
-      - name: 5. Force Fix Android SDK Version
-        run: |
-          # Set SDK versions in local.properties
-          echo "flutter.minSdkVersion=26" >> android/local.properties
-          echo "flutter.compileSdkVersion=34" >> android/local.properties
-          echo "flutter.targetSdkVersion=34" >> android/local.properties
-          
-          # Forcefully replace variables in Gradle files
-          sed -i 's/flutter\.minSdkVersion/26/g' android/app/build.gradle || true
-          sed -i 's/flutter\.minSdkVersion/26/g' android/app/build.gradle.kts || true
-          
-          # Forcefully overwrite minSdk rules
-          sed -i 's/minSdk = .*/minSdk = 26/g' android/app/build.gradle.kts || true
-          sed -i 's/minSdkVersion .*/minSdkVersion 26/g' android/app/build.gradle || true
-          sed -i 's/minSdk .*/minSdk 26/g' android/app/build.gradle || true
+  - name: 7. Build APK
+    run: flutter build apk --release
 
-      - name: 6. Install Dependencies
-        run: flutter pub get
-
-      - name: 7. Build APK
-        run: flutter build apk --release
-
-      - name: 8. Upload App
-        uses: actions/upload-artifact@v4
-        with:
-          name: Health-Alarm-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+  - name: 8. Upload App
+    uses: actions/upload-artifact@v4
+    with:
+      name: Health-Alarm-APK
+      path: build/app/outputs/flutter-apk/app-release.apk
