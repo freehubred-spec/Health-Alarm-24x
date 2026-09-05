@@ -1,4 +1,4 @@
- - name: 1. Checkout Code
+- name: 1. Checkout Code
     uses: actions/checkout@v4
 
   - name: 2. Setup Java
@@ -15,26 +15,15 @@
   - name: 4. Create Android Files
     run: flutter create --project-name health_alarm_24x .
 
-  - name: 5. Force Fix Android SDK Version via Python
+  - name: 5. Fix Android SDK Version
     run: |
-      python3 -c '
-      import os, re
-      
-      for root, dirs, files in os.walk("android"):
-          for file in files:
-              if "build.gradle" in file or file == "local.properties":
-                  filepath = os.path.join(root, file)
-                  with open(filepath, "r") as f:
-                      content = f.read()
-                  
-                  content = re.sub(r"flutter\.minSdkVersion", "26", content)
-                  content = re.sub(r"minSdkVersion\s+\d+", "minSdkVersion 26", content)
-                  content = re.sub(r"minSdk\s*=\s*\d+", "minSdk = 26", content)
-                  
-                  with open(filepath, "w") as f:
-                      f.write(content)
-      print("Successfully patched all Android build files to SDK 26!")
-      '
+      echo "flutter.minSdkVersion=28" >> android/local.properties
+      echo "flutter.compileSdkVersion=34" >> android/local.properties
+      echo "flutter.targetSdkVersion=34" >> android/local.properties
+      sed -i 's/flutter.minSdkVersion/28/g' android/app/build.gradle || true
+      sed -i 's/flutter.minSdkVersion/28/g' android/app/build.gradle.kts || true
+      sed -i 's/minSdkVersion .*/minSdkVersion 28/g' android/app/build.gradle || true
+      sed -i 's/minSdk = .*/minSdk = 28/g' android/app/build.gradle.kts || true
 
   - name: 6. Install Dependencies
     run: flutter pub get
