@@ -27,10 +27,12 @@ jobs:
       - name: 4. Create Android Files
         run: flutter create --project-name health_alarm_24x .
           
-      - name: 5. Fix SDK Version Safely
+      - name: 5. Fix SDK Version to 24
         run: |
-          find android/app -type f -name "build.gradle*" -exec sed -i 's/flutter.minSdkVersion/21/g' {} +
-          find android/app -type f -name "build.gradle*" -exec sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' {} +
+          echo "flutter.minSdkVersion=24" >> android/local.properties
+          find android/app -type f -name "build.gradle*" -exec sed -i 's/flutter.minSdkVersion/24/g' {} +
+          find android/app -type f -name "build.gradle*" -exec sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' {} +
+          find android/app -type f -name "build.gradle*" -exec sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' {} +
 
       - name: 6. Install Dependencies
         run: flutter pub get
