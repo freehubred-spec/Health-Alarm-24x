@@ -24,12 +24,10 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create Android & Bypass Errors
+      - name: Force Create Android Folder
         run: |
-          flutter create .
+          flutter create --project-name health_alarm_24x .
           sed -i 's/flutter.minSdkVersion/21/g' android/app/build.gradle || true
-          sed -i 's/flutter.minSdkVersion/21/g' android/app/build.gradle.kts || true
-          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle.kts || true
           
       - name: Install Dependencies
         run: flutter pub get
