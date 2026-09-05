@@ -24,10 +24,12 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Fix Android Folder and SDK Version
+      - name: Create Android & Bypass Errors
         run: |
-          flutter create --platforms=android .
-          find android/app -type f \( -name "build.gradle" -o -name "build.gradle.kts" \) -exec sed -i 's/flutter.minSdkVersion/21/g' {} +
+          flutter create .
+          sed -i 's/flutter.minSdkVersion/21/g' android/app/build.gradle || true
+          sed -i 's/flutter.minSdkVersion/21/g' android/app/build.gradle.kts || true
+          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle.kts || true
           
       - name: Install Dependencies
         run: flutter pub get
