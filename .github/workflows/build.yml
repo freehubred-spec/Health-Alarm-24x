@@ -1,4 +1,4 @@
-name: Build Android APK
+name: FINAL FLUTTER BUILD
 
 on:
   push:
@@ -10,32 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: 1. Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: 2. Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Flutter
+      - name: 3. Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      - name: Fix Android Folder and SDK Version
-        run: |
-          flutter create .
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+      - name: 4. Create Android Files
+        run: flutter create --project-name health_alarm_24x .
           
-      - name: Install Dependencies
+      - name: 5. Fix SDK Version Safely
+        run: |
+          find android/app -type f -name "build.gradle*" -exec sed -i 's/flutter.minSdkVersion/21/g' {} +
+          find android/app -type f -name "build.gradle*" -exec sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' {} +
+
+      - name: 6. Install Dependencies
         run: flutter pub get
 
-      - name: Build APK
+      - name: 7. Build APK
         run: flutter build apk --release
 
-      - name: Upload Artifact
+      - name: 8. Upload App
         uses: actions/upload-artifact@v4
         with:
           name: Health-Alarm-APK
