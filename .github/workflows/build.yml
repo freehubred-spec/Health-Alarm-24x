@@ -1,38 +1,35 @@
 steps:
-  - name: 1. Checkout Code
+  - name: Checkout Code
     uses: actions/checkout@v4
 
-  - name: 2. Setup Java
+  - name: Setup Java
     uses: actions/setup-java@v4
     with:
       distribution: 'zulu'
       java-version: '17'
 
-  - name: 3. Setup Flutter
+  - name: Setup Flutter
     uses: subosito/flutter-action@v2
     with:
       channel: 'stable'
 
-  - name: 4. Create Android Files
+  - name: Create Android Project
     run: flutter create --project-name health_alarm_24x .
 
-  - name: 5. Fix Android SDK Version
+  - name: Configure Android SDK Version
     run: |
+      mkdir -p android
       echo "flutter.minSdkVersion=28" >> android/local.properties
       echo "flutter.compileSdkVersion=34" >> android/local.properties
       echo "flutter.targetSdkVersion=34" >> android/local.properties
-      sed -i 's/minSdkVersion .*/minSdkVersion 28/g' android/app/build.gradle || true
-      sed -i 's/minSdk = .*/minSdk = 28/g' android/app/build.gradle.kts || true
-      sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle || true
-      sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
 
-  - name: 6. Install Dependencies
+  - name: Install Dependencies
     run: flutter pub get
 
-  - name: 7. Build APK
+  - name: Build APK
     run: flutter build apk --release
 
-  - name: 8. Upload App
+  - name: Upload APK
     uses: actions/upload-artifact@v4
     with:
       name: Health-Alarm-APK
