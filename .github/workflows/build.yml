@@ -1,5 +1,4 @@
-  # STREAMING_CHUNK:Setting up source code and Flutter environment...
-  - name: 1. Checkout Code
+ - name: 1. Checkout Code
     uses: actions/checkout@v4
 
   - name: 2. Setup Java
@@ -13,7 +12,6 @@
     with:
       channel: 'stable'
 
-  # STREAMING_CHUNK:Generating Android folder and patching SDK versions...
   - name: 4. Create Android Files
     run: flutter create --project-name health_alarm_24x .
 
@@ -38,7 +36,6 @@
       print("Successfully patched all Android build files to SDK 26!")
       '
 
-  # STREAMING_CHUNK:Building the Android APK release artifact...
   - name: 6. Install Dependencies
     run: flutter pub get
 
