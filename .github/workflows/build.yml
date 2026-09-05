@@ -1,25 +1,20 @@
- # STREAMING_CHUNK:Checking out repository source files...
-  - name: Checkout Code
+- name: Checkout Code
     uses: actions/checkout@v4
 
-  # STREAMING_CHUNK:Setting up Java 17 Zulu environment...
   - name: Setup Java
     uses: actions/setup-java@v4
     with:
       distribution: 'zulu'
       java-version: '17'
 
-  # STREAMING_CHUNK:Setting up Flutter stable channel...
   - name: Setup Flutter
     uses: subosito/flutter-action@v2
     with:
       channel: 'stable'
 
-  # STREAMING_CHUNK:Creating Android project boilerplate...
   - name: Create Android Project
     run: flutter create --project-name health_alarm_24x .
 
-  # STREAMING_CHUNK:Configuring Android SDK version properties...
   - name: Set Min SDK Version
     run: |
       echo "flutter.minSdkVersion=28" >> android/local.properties
@@ -30,15 +25,12 @@
       sed -i 's/flutter.minSdkVersion/28/g' android/app/build.gradle || true
       sed -i 's/flutter.minSdkVersion/28/g' android/app/build.gradle.kts || true
 
-  # STREAMING_CHUNK:Installing Flutter pub packages...
   - name: Install Dependencies
     run: flutter pub get
 
-  # STREAMING_CHUNK:Building release APK artifact...
   - name: Build APK
     run: flutter build apk --release
 
-  # STREAMING_CHUNK:Uploading generated APK artifact to GitHub Actions...
   - name: Upload APK
     uses: actions/upload-artifact@v4
     with:
