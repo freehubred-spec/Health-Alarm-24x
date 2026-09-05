@@ -1,4 +1,5 @@
-- name: 1. Checkout Code
+ssteps:
+  - name: 1. Checkout Code
     uses: actions/checkout@v4
 
   - name: 2. Setup Java
@@ -20,10 +21,10 @@
       echo "flutter.minSdkVersion=28" >> android/local.properties
       echo "flutter.compileSdkVersion=34" >> android/local.properties
       echo "flutter.targetSdkVersion=34" >> android/local.properties
-      sed -i 's/flutter.minSdkVersion/28/g' android/app/build.gradle || true
-      sed -i 's/flutter.minSdkVersion/28/g' android/app/build.gradle.kts || true
       sed -i 's/minSdkVersion .*/minSdkVersion 28/g' android/app/build.gradle || true
       sed -i 's/minSdk = .*/minSdk = 28/g' android/app/build.gradle.kts || true
+      sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle || true
+      sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
 
   - name: 6. Install Dependencies
     run: flutter pub get
