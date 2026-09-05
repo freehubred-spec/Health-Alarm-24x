@@ -13,10 +13,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
       - name: Setup Flutter
@@ -24,38 +24,24 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Generate Fresh Android Project
+      - name: Fix Android Folder and SDK Version
         run: |
-          rm -rf android
-          flutter create --platforms=android --org com.healthalarm --project-name health_alarm_24x .
-
-      - name: Set Android MinSdkVersion to 21
-        run: |
-          python3 -c "
-          import re
-          path = 'android/app/build.gradle'
-          with open(path, 'r') as f:
-              text = f.read()
-          text = re.sub(r'minSdkVersion\s+.*', 'minSdkVersion 21', text)
-          text = re.sub(r'minSdk\s*=.*', 'minSdk = 21', text)
-          text = re.sub(r'compileSdkVersion\s+.*', 'compileSdkVersion 34', text)
-          text = re.sub(r'compileSdk\s*=.*', 'compileSdk = 34', text)
-          with open(path, 'w') as f:
-              f.write(text)
-          print('Updated build.gradle with minSdk 21 successfully')
-          "
-
-      - name: Set Permission for Gradle
-        run: chmod +x android/gradlew
-
-      - name: Fetch Dependencies
+          flutter create --platforms=android .
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+          fi
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle.kts
+          fi
+          
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Debug APK
-        run: flutter build apk --debug
+      - name: Build APK
+        run: flutter build apk --release
 
-      - name: Upload APK
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Health-Alarm-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
